@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 import { useEffect, useState } from 'react'
 import Layout from '../../components/Layout'
@@ -16,6 +17,8 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { db, storage, auth } from '../../lib/firebaseClient'
 import { onAuthStateChanged, getIdTokenResult } from 'firebase/auth'
+import { createMarkup } from '../../lib/richText'
+import { dateKeyFromDate, toDate } from '../../lib/firestore'
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
 import 'react-quill/dist/quill.snow.css'
@@ -65,7 +68,7 @@ export default function ClinicUpdatesAdmin() {
         const snap = await getDocs(q)
         const data = snap.docs.map((d) => {
           const raw = d.data()
-          const dateObj = raw.date?.seconds ? new Date(raw.date.seconds * 1000) : new Date(raw.date || Date.now())
+          const dateObj = toDate(raw.date) || new Date()
           return { id: d.id, ...raw, date: dateObj }
         })
         setUpdates(data)
@@ -77,14 +80,6 @@ export default function ClinicUpdatesAdmin() {
     }
     load()
   }, [activeCategory])
-
-  const dateKeyFromDate = (d) => {
-    if (!d) return null
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-  }
 
   const uploadImageFile = async (file) => {
     if (!file) return null
@@ -145,7 +140,7 @@ export default function ClinicUpdatesAdmin() {
       const snap = await getDocs(query(collection(db, 'clinic_updates'), orderBy('date', 'desc')))
       const list = snap.docs.map((d) => {
         const raw = d.data()
-        const dateObj = raw.date?.seconds ? new Date(raw.date.seconds * 1000) : new Date(raw.date || Date.now())
+        const dateObj = toDate(raw.date) || new Date()
         return { id: d.id, ...raw, date: dateObj }
       })
       setUpdates(list)
@@ -299,7 +294,7 @@ export default function ClinicUpdatesAdmin() {
                   {u.name && <>👤 {u.name}</>} {u.ic && <> • {u.ic}</>} <br />
                   {u.diagnosis && <>💊 {u.diagnosis}</>} {u.listedBy && <> • Listed by: {u.listedBy}</>}
                 </div>
-                <div className="mt-2 text-gray-700 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: u.body }} />
+                <div className="mt-2 text-gray-700 dark:text-gray-300" dangerouslySetInnerHTML={createMarkup(u.body, { linkify: true })} />
                 {u.imageUrl && (
                   <a href={u.imageUrl} target="_blank" rel="noopener noreferrer">
                     <img src={u.imageUrl} alt="" className="mt-3 rounded-lg shadow w-48 cursor-pointer hover:opacity-80" />

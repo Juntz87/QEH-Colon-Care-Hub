@@ -1,34 +1,18 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
-import { auth, db } from "../lib/firebaseClient";
-import { onAuthStateChanged, getIdTokenResult } from "firebase/auth";
+import { db } from "../lib/firebaseClient";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import useAuthRole from "../hooks/useAuthRole";
+import { createMarkup } from "../lib/richText";
 
 export default function OfficersResources() {
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState("public");
-  const [loadingAuth, setLoadingAuth] = useState(true);
+  const { role, loading: loadingAuth } = useAuthRole();
   const [tabs, setTabs] = useState([]);
   const [active, setActive] = useState(0);
   const [loadingTabs, setLoadingTabs] = useState(true);
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      if (u) {
-        const token = await getIdTokenResult(u);
-        const r = token.claims?.role?.toLowerCase() || "public";
-        setUser(u);
-        setRole(r);
-      } else {
-        setUser(null);
-        setRole("public");
-      }
-      setLoadingAuth(false);
-    });
-    return () => unsub();
-  }, []);
 
   useEffect(() => {
     async function load() {
@@ -55,15 +39,6 @@ export default function OfficersResources() {
     }
     load();
   }, []);
-
-  // Convert plain URLs into clickable links
-  const makeLinksClickable = (html) => {
-    if (!html) return "";
-    return html.replace(
-      /(https?:\/\/[^\s<]+)/g,
-      '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-qehBlue underline hover:text-qehNavy">$1</a>'
-    );
-  };
 
   if (loadingAuth)
     return (
@@ -136,9 +111,7 @@ export default function OfficersResources() {
 
               <div
                 className="prose max-w-none dark:prose-invert text-gray-700 dark:text-gray-300"
-                dangerouslySetInnerHTML={{
-                  __html: makeLinksClickable(tabs[active].content || ""),
-                }}
+                dangerouslySetInnerHTML={createMarkup(tabs[active].content, { linkify: true })}
               />
             </div>
           </div>

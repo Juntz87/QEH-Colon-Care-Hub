@@ -1,8 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 import Layout from "../components/Layout";
 import { useEffect, useState } from "react";
 import { db } from "../lib/firebaseClient";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { createMarkup } from "../lib/richText";
 
 export default function Team() {
   const [team, setTeam] = useState([]);
@@ -68,7 +70,7 @@ export default function Team() {
                   {m.bio && (
                     <div
                       className="mt-2 text-gray-700 dark:text-gray-300 text-sm"
-                      dangerouslySetInnerHTML={{ __html: m.bio }}
+                      dangerouslySetInnerHTML={createMarkup(m.bio)}
                     />
                   )}
                 </div>

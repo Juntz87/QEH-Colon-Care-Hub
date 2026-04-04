@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
+import Image from "next/image";
 import { auth } from "../lib/firebaseClient";
 import { onAuthStateChanged, getIdTokenResult } from "firebase/auth";
 
@@ -79,9 +80,11 @@ export default function QEHStyleGuide() {
             </div>
             <div className="card">
               <h3 className="card-title">With Image</h3>
-              <img
+              <Image
                 src="/LogoCRC.png"
                 alt="Example"
+                width={400}
+                height={240}
                 className="rounded-lg shadow-md mt-3"
               />
               <p className="mt-2 text-gray-600 dark:text-gray-300">

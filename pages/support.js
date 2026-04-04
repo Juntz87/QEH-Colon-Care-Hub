@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -5,6 +6,8 @@ import Layout from '../components/Layout'
 import { db } from '../lib/firebaseClient'
 import { collection, getDocs, orderBy, query } from 'firebase/firestore'
 import { motion } from 'framer-motion'
+import { createMarkup } from '../lib/richText'
+import { formatDateTime } from '../lib/firestore'
 
 export default function Support() {
   const [supportData, setSupportData] = useState([])
@@ -73,7 +76,7 @@ export default function Support() {
                 {item.description && (
                   <div
                     className="prose dark:prose-invert max-w-none mb-3"
-                    dangerouslySetInnerHTML={{ __html: item.description }}
+                    dangerouslySetInnerHTML={createMarkup(item.description, { linkify: true })}
                   />
                 )}
 
@@ -108,7 +111,7 @@ export default function Support() {
                 {/* Timestamp */}
                 {item.createdAt?.toDate && (
                   <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    Updated: {item.createdAt.toDate().toLocaleString()}
+                    Updated: {formatDateTime(item.createdAt)}
                   </div>
                 )}
               </div>

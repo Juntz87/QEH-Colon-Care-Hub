@@ -3,12 +3,12 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Sun, Moon, LogIn, LogOut, Shield } from 'lucide-react'
 import { auth, provider } from '../lib/firebaseClient'
-import { onAuthStateChanged, signInWithPopup, signOut, getIdTokenResult } from 'firebase/auth'
+import { signInWithPopup, signOut } from 'firebase/auth'
+import useAuthRole from '../hooks/useAuthRole'
 
 export default function NavBar() {
   const [theme, setTheme] = useState('light')
-  const [user, setUser] = useState(null)
-  const [role, setRole] = useState('public')
+  const { user, role } = useAuthRole()
 
   // 🌗 Initialize theme
   useEffect(() => {
@@ -26,31 +26,9 @@ export default function NavBar() {
     document.documentElement.classList.toggle('dark', next === 'dark')
   }
 
-  // 👤 Auth & Role listener
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      if (u) {
-        setUser(u)
-        try {
-          const token = await getIdTokenResult(u)
-          const r = token.claims?.role?.toLowerCase() || 'public'
-          setRole(r)
-        } catch (e) {
-          console.error('Error fetching role:', e)
-          setRole('public')
-        }
-      } else {
-        setUser(null)
-        setRole('public')
-      }
-    })
-    return () => unsub()
-  }, [])
-
   const handleLogin = async () => {
     try {
       await signInWithPopup(auth, provider)
-      window.location.reload()
     } catch (e) {
       console.error('Login failed:', e)
       alert('Login failed — check console for details.')
@@ -60,7 +38,6 @@ export default function NavBar() {
   const handleLogout = async () => {
     try {
       await signOut(auth)
-      window.location.href = '/'
     } catch (e) {
       console.error('Logout failed:', e)
       alert('Logout failed — check console for details.')

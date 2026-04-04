@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 import { useRef } from "react";
 import { useEffect, useState } from 'react'
@@ -17,6 +18,8 @@ import {
 } from 'firebase/firestore'
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { onAuthStateChanged, getIdTokenResult } from 'firebase/auth'
+import { createMarkup } from '../../lib/richText'
+import { formatDateTime } from '../../lib/firestore'
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
 import 'react-quill/dist/quill.snow.css'
@@ -278,12 +281,10 @@ export default function SupportAdmin() {
 
                   <div
                     className="text-sm text-gray-600 dark:text-gray-300 mt-2"
-                    dangerouslySetInnerHTML={{ __html: item.description }}
+                    dangerouslySetInnerHTML={createMarkup(item.description, { linkify: true })}
                   />
                   <div className="mt-2 text-xs text-gray-500">
-                    {item.createdAt?.toDate
-                      ? item.createdAt.toDate().toLocaleString()
-                      : ''}
+                    {formatDateTime(item.createdAt)}
                   </div>
                 </div>
 

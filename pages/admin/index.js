@@ -1,36 +1,12 @@
-import { useRef } from "react";
-import { scrollToForm } from "../../lib/scrollToForm";
-// pages/admin/index.js
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Layout from '../../components/Layout'
 import { motion } from 'framer-motion'
 import { auth } from '../../lib/firebaseClient'
-import { onAuthStateChanged, getIdTokenResult, signOut } from 'firebase/auth'
+import { signOut } from 'firebase/auth'
+import useAuthRole from '../../hooks/useAuthRole'
 
 export default function AdminDashboard() {
-  const formRef = useRef(null);
-
-  const [user, setUser] = useState(null)
-  const [role, setRole] = useState('public')
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) {
-        setUser(null)
-        setRole('public')
-        setLoading(false)
-        return
-      }
-      setUser(u)
-      const token = await getIdTokenResult(u)
-      const userRole = token.claims?.role?.toLowerCase() || 'public'
-      setRole(userRole)
-      setLoading(false)
-    })
-    return () => unsub()
-  }, [])
+  const { user, role, loading } = useAuthRole()
 
   if (loading) {
     return (

@@ -1,16 +1,6 @@
-# Ignore backup and build files
-pages/BACKUP/
-BACKUP/
-.next/
-node_modules/
-serviceAccountKey.json
-
-# Environment variables (never commit these)
-.env
-.env.local
-.env*.local
-.env.development
-.env.production
-
-# Mac system files
 .DS_Store
+.next
+.vercel
+node_modules
+npm-debug.log*
+serviceAccountKey.json

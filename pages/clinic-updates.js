@@ -1,30 +1,20 @@
 // pages/clinic-updates.js
+/* eslint-disable @next/next/no-img-element */
 'use client'
 import { useEffect, useState } from 'react'
 import Layout from '../components/Layout'
-import dynamic from 'next/dynamic'
 import { collection, getDocs } from 'firebase/firestore'
-import { db, auth } from '../lib/firebaseClient'
-import { onAuthStateChanged } from 'firebase/auth'
-
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
-import 'react-quill/dist/quill.snow.css'
+import { db } from '../lib/firebaseClient'
+import useAuthRole from '../hooks/useAuthRole'
+import { createMarkup } from '../lib/richText'
+import { dateKeyFromDate, formatDateTime, toDate } from '../lib/firestore'
 
 export default function ClinicUpdatesPublic() {
-  const [signedIn, setSignedIn] = useState(false)
-  const [loadingAuth, setLoadingAuth] = useState(true)
+  const { user, loading: loadingAuth } = useAuthRole()
   const [updates, setUpdates] = useState([])
   const [activeCategory, setActiveCategory] = useState('MDT')
   const [activeDateKey, setActiveDateKey] = useState(null)
   const categories = ['MDT', 'Scan', 'Social Welfare', 'Case Discussion']
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setSignedIn(Boolean(u))
-      setLoadingAuth(false)
-    })
-    return () => unsub()
-  }, [])
 
   useEffect(() => {
     async function load() {
@@ -32,7 +22,7 @@ export default function ClinicUpdatesPublic() {
         const snap = await getDocs(collection(db, 'clinic_updates'))
         const data = snap.docs.map((d) => {
           const raw = d.data()
-          const dateObj = raw.date?.seconds ? new Date(raw.date.seconds * 1000) : raw.date ? new Date(raw.date) : new Date()
+          const dateObj = toDate(raw.date) || new Date()
           return {
             id: d.id,
             ...raw,
@@ -58,14 +48,6 @@ export default function ClinicUpdatesPublic() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  const dateKeyFromDate = (d) => {
-    if (!d) return null
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-  }
 
   const grouped = categories.reduce((acc, cat) => {
     const items = updates.filter((u) => u.category === cat)
@@ -97,7 +79,7 @@ export default function ClinicUpdatesPublic() {
   }, [activeCategory, updates])
 
   if (loadingAuth) return <Layout><div className="p-6">Checking sign-in...</div></Layout>
-  if (!signedIn)
+  if (!user)
     return (
       <Layout>
         <div className="py-24 text-center text-gray-600 dark:text-gray-300">
@@ -158,7 +140,7 @@ export default function ClinicUpdatesPublic() {
                     </div>
 
                     <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                      {u.category} • {u.date?.toLocaleString?.('en-MY', { dateStyle: 'short', timeStyle: 'short' })}
+                      {u.category} • {formatDateTime(u.date, 'en-MY', { dateStyle: 'short', timeStyle: 'short' })}
                     </div>
 
                     {/* show the new fields if present */}
@@ -167,7 +149,7 @@ export default function ClinicUpdatesPublic() {
                       {u.diagnosis && <><strong>Diagnosis:</strong> {u.diagnosis}</>} {u.listedBy && <>&nbsp; • &nbsp;<strong>Listed by:</strong> {u.listedBy}</>}
                     </div>
 
-                    <div className="mt-2 text-gray-700 dark:text-gray-200" dangerouslySetInnerHTML={{ __html: u.body || u.content || '' }} />
+                    <div className="mt-2 text-gray-700 dark:text-gray-200" dangerouslySetInnerHTML={createMarkup(u.body || u.content, { linkify: true })} />
 
                     {u.imageUrl && (
                       <div className="mt-3">

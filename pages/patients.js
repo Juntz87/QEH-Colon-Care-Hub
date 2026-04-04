@@ -1,8 +1,10 @@
 // pages/patients.js
+/* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { db } from "../lib/firebaseClient";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { createMarkup } from "../lib/richText";
 
 export default function Patients() {
   const [tabs, setTabs] = useState([]);
@@ -75,7 +77,7 @@ export default function Patients() {
 
               <div
                 className="prose max-w-none dark:prose-invert text-gray-700 dark:text-gray-300"
-                dangerouslySetInnerHTML={{ __html: tabs[active].content || "" }}
+                dangerouslySetInnerHTML={createMarkup(tabs[active].content)}
               />
             </div>
           </div>

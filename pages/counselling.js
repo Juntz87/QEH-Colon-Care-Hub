@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -5,6 +6,7 @@ import Layout from '../components/Layout'
 import { motion } from 'framer-motion'
 import { db } from '../lib/firebaseClient'
 import { collection, getDocs, query, orderBy } from 'firebase/firestore'
+import { createMarkup } from '../lib/richText'
 
 export default function Counselling() {
   const [tabs, setTabs] = useState([])
@@ -85,7 +87,7 @@ export default function Counselling() {
                 )}
                 <div
                   className="prose max-w-none dark:prose-invert text-gray-700 dark:text-gray-300"
-                  dangerouslySetInnerHTML={{ __html: active.content }}
+                  dangerouslySetInnerHTML={createMarkup(active.content)}
                 />
               </div>
             )}

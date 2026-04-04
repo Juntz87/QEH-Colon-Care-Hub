@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { useEffect, useState, useRef } from "react";
@@ -17,6 +18,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { createMarkup } from "../../lib/richText";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -390,7 +392,7 @@ export default function TeamAdmin() {
                 <div className="text-gray-600 dark:text-gray-300">{m.position}</div>
                 <div
                   className="mt-2 text-gray-700 dark:text-gray-300"
-                  dangerouslySetInnerHTML={{ __html: m.bio || "" }}
+                  dangerouslySetInnerHTML={createMarkup(m.bio)}
                 />
                 {m.imageUrl && (
                   <a href={m.imageUrl} target="_blank" rel="noopener noreferrer">

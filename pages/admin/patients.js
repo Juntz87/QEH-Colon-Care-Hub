@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { useEffect, useState, useRef } from "react";
@@ -15,8 +16,9 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { db, storage, auth } from "../../lib/firebaseClient";
-import { onAuthStateChanged, getIdTokenResult } from "firebase/auth";
+import { db, storage } from "../../lib/firebaseClient";
+import useAuthRole from "../../hooks/useAuthRole";
+import { createMarkup } from "../../lib/richText";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -29,33 +31,21 @@ export default function PatientsAdmin() {
   const [imageUrl, setImageUrl] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null);
   const formRef = useRef(null);
+  const { role, loading } = useAuthRole();
 
   const COLL = "patients_tabs";
 
-  // 👤 Auth
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      if (u) {
-        const token = await getIdTokenResult(u);
-        setUser(u);
-        setRole(token.claims?.role || "public");
-      } else {
-        setUser(null);
-        setRole("public");
-      }
-    });
-    return () => unsub();
-  }, []);
+  async function loadTabs() {
+    const q = query(collection(db, COLL), orderBy("order", "asc"));
+    const snap = await getDocs(q);
+    setTabs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  }
 
   // 🔄 Load data
   useEffect(() => {
     async function load() {
-      const q = query(collection(db, COLL), orderBy("order", "asc"));
-      const snap = await getDocs(q);
-      setTabs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      await loadTabs();
     }
     load();
   }, []);
@@ -115,7 +105,7 @@ export default function PatientsAdmin() {
       setEditingId(null);
       setShowForm(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
-      window.location.reload();
+      await loadTabs();
     } catch (e) {
       console.error("Error saving:", e);
     }
@@ -139,6 +129,13 @@ export default function PatientsAdmin() {
     await deleteDoc(doc(db, COLL, id));
     setTabs(tabs.filter((t) => t.id !== id));
   };
+
+  if (loading)
+    return (
+      <Layout>
+        <div className="p-6 text-center text-gray-600 dark:text-gray-300">Loading...</div>
+      </Layout>
+    );
 
   if (!["master", "officer"].includes(role))
     return (
@@ -223,7 +220,7 @@ export default function PatientsAdmin() {
                 <h3 className="font-semibold text-qehNavy dark:text-white">{tab.title}</h3>
                 <div
                   className="mt-2 text-gray-700 dark:text-gray-300"
-                  dangerouslySetInnerHTML={{ __html: tab.content }}
+                  dangerouslySetInnerHTML={createMarkup(tab.content)}
                 />
                 {tab.imageUrl && (
                   <img
